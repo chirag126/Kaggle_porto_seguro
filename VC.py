@@ -19,8 +19,9 @@ from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn.ensemble import VotingClassifier
-train=pd.read_csv("C:/Users/Vineet/Desktop/Kaggle/train.csv")
-test=pd.read_csv("C:/Users/Vineet/Desktop/Kaggle/test.csv")
+
+train=pd.read_csv("/home/chirag212/Kaggle_porto_seguro/train.csv")
+test=pd.read_csv("/home/chirag212/Kaggle_porto_seguro/test.csv")
 
 train.head(n=5)
 test.head(n=5)
@@ -45,28 +46,25 @@ Y_test_pred_prob = logreg.predict_proba(X_test)
 
 
 #Decision Tree
-clf = tree.DecisionTreeClassifier(random_state=1)
-results = clf.fit(X_train ,y_train)
-Y_test_pred_DT = logreg.predict(X_test)
-Y_test_pred_prob_DT = clf.predict_proba(X_test)
+dt = tree.DecisionTreeClassifier(random_state=1)
+results = dt.fit(X_train ,y_train)
+
+Y_test_pred_prob_DT = dt.predict_proba(X_test)
 
 
 #Ramdom Classifier on Train Data
+rc = RandomForestClassifier(random_state=1)
+results = rc.fit(X_train ,y_train)
 
-
-clf1 = RandomForestClassifier(random_state=1)
-results = clf1.fit(X_train ,y_train)
-
-
-Y_test_pred_rf = clf1.predict(X_test)
-Y_test_pred_prob_rf = clf1.predict_proba(X_test)
+Y_test_pred_prob_rf = rc.predict_proba(X_test)
 
 #Voting Classifier
 
-eclf = VotingClassifier(estimators=[('lr', logreg), ('rf', clf), ('ran', clf1)],
+eclf = VotingClassifier(estimators=[('lr', logreg), ('dt', dt), ('rc', rc)],
                         voting='soft', weights=[1,1,1])
-
 eclf = eclf.fit(X_train, y_train)
-Y_test_pred_VC = clf1.predict_log_proba(X_test)
-print(eclf.score(X_test_tf, y_test)) #0.332358104154
-save_list(Y_test_pred,r'C:/Users/Vineet/Desktop/Adv Text/Session3/664694644_voting.txt')
+
+Y_test_pred_VC = eclf.predict_proba(X_test)
+
+output = pd.DataFrame({'id': test['id'], 'target': np.ravel(Y_test_pred_VC[:, 1])})
+output.to_csv("/home/chirag212/Kaggle_porto_seguro/NVC_v5_voting.csv", index=False)
